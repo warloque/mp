@@ -17,14 +17,14 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
   }
 
   // Your Client ID can be retrieved from your project in the Google
-  var USER_QUERY = decodeURIComponent(getUrlVars()["q"]);
-  var USER_MAXRESULTS = getUrlVars()["maxResults"];
+  USER_QUERY = decodeURIComponent(getUrlVars()["q"]);
+  USER_MAXRESULTS = getUrlVars()["maxResults"];
 
   // update interface
-  if(USER_QUERY.length){
+  if(typeof USER_QUERY === 'undefined' || USER_QUERY === null){
     document.getElementById('q').value = USER_QUERY;
   }
-  if(USER_MAXRESULTS.length){
+  if(typeof USER_MAXRESULTS === 'undefined' || USER_MAXRESULTS === null){
     document.getElementById('maxResults').value = USER_MAXRESULTS;
   }
 
@@ -63,7 +63,7 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
       loadGmailApi();
       $authorizeBtn.off();
       $authorizeBtn.remove();
-      $('.table-inbox').removeClass("hidden");
+      $('.table-inbox, #filters').removeClass("hidden");
 
     } else {
 
@@ -79,8 +79,8 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
     var request = gapi.client.gmail.users.messages.list({
       userId: 'me',
       labelIds: 'INBOX',
-      maxResults: (USER_MAXRESULTS.length > 0) ? USER_MAXRESULTS: 1,
-      'q': (USER_QUERY.length > 0) ? USER_QUERY: ''
+      maxResults: (USER_MAXRESULTS) ? USER_MAXRESULTS: 1,
+      'q': (USER_QUERY) ? USER_QUERY: ''
     });
 
     request.execute(function(response) {
