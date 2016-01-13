@@ -1,0 +1,27 @@
+{
+  "name": "gmail-api-js",
+  "version": "0.1.0",
+  "homepage": "https://github.com/atymchuk/gmail-api-js",
+  "authors": [
+    "Jamie Shields http://www.sitepoint.com/author/jshields",
+    "Alex Tymchuk <alexander.tymchuk@gmail.com>",
+    "Eugene N <solidkey@gmail.com>"
+  ],
+  "description": "Sample Gmail API project",
+  "keywords": [
+    "Gmail",
+    "API",
+    "JavaScript"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "mustache": "~2.1.3",
+  }
+}
