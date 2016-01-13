@@ -21,10 +21,10 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
   USER_MAXRESULTS = getUrlVars()["maxResults"];
 
   // update interface
-  if(typeof USER_QUERY === 'undefined' || USER_QUERY === null){
+  if(USER_QUERY !== 'undefined'){
     document.getElementById('q').value = USER_QUERY;
   }
-  if(typeof USER_MAXRESULTS === 'undefined' || USER_MAXRESULTS === null){
+  if(USER_MAXRESULTS !== 'undefined'){
     document.getElementById('maxResults').value = USER_MAXRESULTS;
   }
 
