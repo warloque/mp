@@ -27,22 +27,29 @@
       <button id="authorize-button" class="btn btn-primary hidden">Authorize</button>
 
       <form id="filters" name="filters" method="get" class="form-horizontal hidden">
+
         <div class="form-group">
-          <div class="col-md-4">
+          <div class="col-md-3">
+            <label class="control-label col-md-2" for="label">Label</label>
+            <select class="form-control" id="label" name="label">
+
+            </select>
+          </div>
+          <div class="col-md-3">
             <label class="control-label col-md-2" for="q">Match</label>
             <div class="col-md-10">
               <input class="form-control" type="text" name="q" id="q" placeholder="filter match" value="" />
             </div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label class="control-label col-md-2" for="maxResults">Limit</label>
             <div class="col-md-10">
               <input class="form-control" type="number" name="maxResults" id="maxResults" placeholder="filter limit" value="1" min="1" />
             </div>
           </div>
           <button type="submit" class="btn btn-success">Filter</button>
-
         </div>
+
       </form>
 
       <table class="table table-striped table-bordered table-inbox hidden">
@@ -73,6 +80,10 @@
         </div>
       </div>
     </div>
+
+    <script id="option-template" type="x-tmpl-mustache">
+      <option value="{{messageLabelId}}" {{messageLabelSelected}}>{{messageLabelName}}</option>
+    </script>
 
     <script id="row-template" type="x-tmpl-mustache">
       <tr>

@@ -19,6 +19,7 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
   // Your Client ID can be retrieved from your project in the Google
   USER_QUERY = decodeURIComponent(getUrlVars()["q"]);
   USER_MAXRESULTS = getUrlVars()["maxResults"];
+  USER_LABEL = decodeURIComponent(getUrlVars()["label"]);
 
   // update interface
   if(USER_QUERY !== 'undefined'){
@@ -26,6 +27,9 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
   }
   if(USER_MAXRESULTS !== 'undefined'){
     document.getElementById('maxResults').value = USER_MAXRESULTS;
+  }
+  if(USER_LABEL !== 'undefined'){
+    document.getElementById('label').value = USER_LABEL;
   }
 
   function config(config) {
@@ -59,14 +63,11 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
     var $authorizeBtn = $('#authorize-button');
 
     if(authResult && !authResult.error) {
-
       loadGmailApi();
       $authorizeBtn.off();
       $authorizeBtn.remove();
       $('.table-inbox, #filters').removeClass("hidden");
-
     } else {
-
       $authorizeBtn.removeClass("hidden");
     }
   }
@@ -75,13 +76,40 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
     gapi.client.load('gmail', 'v1', displayInbox);
   }
 
+  function listLabels(callback) {
+    var request = gapi.client.gmail.users.labels.list({
+      'userId': 'me'
+    });
+    request.execute(function(resp) {
+      var labels = resp.labels;
+
+      //callback(labels);
+      //console.log(labels);
+
+      for (var key_super in labels) {
+        var row = $('#option-template').html()
+        var renderedRow = Mustache.render(row, {
+          messageLabelId : labels[key_super]['id'],
+          messageLabelType : labels[key_super]['type'],
+          messageLabelName : labels[key_super]['name'],
+          messageLabelSelected : (USER_LABEL === labels[key_super]['id']) ? 'selected' : ''
+        });
+        $('#label').append(renderedRow);
+      }
+
+    });
+  }
+
   function displayInbox() {
     var request = gapi.client.gmail.users.messages.list({
       userId: 'me',
-      labelIds: 'INBOX',
+      //labelIds: 'INBOX',
+      labelIds: (USER_LABEL) ? USER_LABEL: 'INBOX',
       maxResults: (USER_MAXRESULTS) ? USER_MAXRESULTS: 1,
       'q': (USER_QUERY) ? USER_QUERY: ''
     });
+
+    listLabels();
 
     request.execute(function(response) {
       var promises = [];
