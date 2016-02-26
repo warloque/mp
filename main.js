@@ -103,7 +103,6 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
   function displayInbox() {
     var request = gapi.client.gmail.users.messages.list({
       userId: 'me',
-      //labelIds: 'INBOX',
       labelIds: (USER_LABEL) ? USER_LABEL: 'INBOX',
       maxResults: (USER_MAXRESULTS) ? USER_MAXRESULTS: 1,
       'q': (USER_QUERY) ? USER_QUERY: ''

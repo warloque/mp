@@ -26,33 +26,32 @@
 
       <button id="authorize-button" class="btn btn-primary hidden">Authorize</button>
 
-      <form id="filters" name="filters" method="get" class="form-horizontal hidden">
+      <form id="filters" name="filters" method="get" class="form-inline hidden">
 
-        <div class="form-group">
-          <div class="col-md-3">
-            <label class="control-label col-md-2" for="label">Label</label>
+          <div class="form-group">
+            <label class="control-label" for="label">Label</label>
             <select class="form-control" id="label" name="label">
-
+              <option value="">–</option>
             </select>
           </div>
-          <div class="col-md-3">
-            <label class="control-label col-md-2" for="q">Match</label>
-            <div class="col-md-10">
-              <input class="form-control" type="text" name="q" id="q" placeholder="filter match" value="" />
-            </div>
+
+          <div class="form-group">
+            <label class="control-label" for="q">Match</label>
+            <input class="form-control" type="text" name="q" id="q" placeholder="filter match" value="" />
           </div>
-          <div class="col-md-3">
-            <label class="control-label col-md-2" for="maxResults">Limit</label>
-            <div class="col-md-10">
-              <input class="form-control" type="number" name="maxResults" id="maxResults" placeholder="filter limit" value="1" min="1" />
-            </div>
+
+          <div class="form-group">
+            <label class="control-label" for="maxResults">Limit</label>
+            <input class="form-control" type="number" name="maxResults" id="maxResults" placeholder="filter limit" value="1" min="1" />
           </div>
+
           <button type="submit" class="btn btn-success">Filter</button>
-        </div>
 
       </form>
 
-      <table class="table table-striped table-bordered table-inbox hidden">
+      <p class="clearfix js_ui-message"></p>
+
+      <table class="table table-hover table-inbox hidden">
         <thead>
           <tr>
             <th>From</th>
