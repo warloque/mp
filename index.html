@@ -4,14 +4,16 @@
     <title>Gmail API demo</title>
     <meta charset="UTF-8">
 
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/bootstrap-theme.min.css"/>
+    <link rel="stylesheet" href="/js/plugins/vis/vis.min.css"/>
+
     <style>
       iframe {
         width: 100%;
         border: 0;
-        min-height: 80%;
-        height: 600px;
+        min-height: 700px;
+        height: 90%;
         display: flex;
       }
       .nowrap {
@@ -22,6 +24,7 @@
   <body>
 
     <div class="container">
+
       <h1>Gmail API demo</h1>
 
       <button id="authorize-button" class="btn btn-primary hidden">Authorize</button>
@@ -45,11 +48,16 @@
             <input class="form-control" type="number" name="maxResults" id="maxResults" placeholder="filter limit" value="1" min="1" />
           </div>
 
-          <button type="submit" class="btn btn-success">Filter</button>
+        <div class="btn-group" role="group" aria-label="Basic example">
+          <button type="submit" class="btn btn-success">Read</button>
+          <input type="button" id="js_ui-parse" value="Parse" class="btn btn-info" />
+        </div>
 
       </form>
 
       <p class="clearfix js_ui-message"></p>
+
+      <div id="visualization"></div>
 
       <table class="table table-hover table-inbox hidden">
         <thead>
@@ -61,6 +69,7 @@
         </thead>
         <tbody></tbody>
       </table>
+
     </div>
 
     <div class="modal fade" id="message-modal" tabindex="-1" role="dialog" aria-labelledby="myModalTitle">
@@ -96,17 +105,33 @@
       </tr>
     </script>
 
+    <script id="row-parsed-template" type="x-tmpl-mustache">
+      <tr>
+        <td><img height="16" width="16" src='http://www.google.com/s2/favicons?domain={{shop_logo}}' />{{shop_name}}</td>
+        <td>
+          <a href="#" class="message-link" data-toggle="modal" id="message-link-{{messageId}}">
+            <strong>{{order_id}}</strong><br />
+            {{order_title}}
+          </a>
+        </td>
+        <td class="nowrap">{{order_date}} / <small>{{order_time}}</small></td>
+      </tr>
+    </script>
+
     <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+    <script src="/js/utils/h5utils.js"></script>
+    <script src="/js/utils/utils.js"></script>
+
+    <!--<script src="/js/utils/diff_match_patch.js"></script>-->
+    <script src="/js/plugins/vis/vis.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
-    <!-- 
-      // I don't know the reason why mustache is not loading via cdnjs,
-      // so no choice but to load it locally
-      <script scr="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.1.3/mustache.min.js" type="text/javascript"></script>
-    -->
     <script src="bower_components/mustache/mustache.min.js"></script>
+
     <script src="main.js"></script>
     <script src="config.js"></script>
     <script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+
   </body>
 </html>
