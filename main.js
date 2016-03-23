@@ -231,9 +231,10 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
 
         var aV = [];
         for(var i= 0, len=(aParsed.length-1); i<len; i++){
-          var oV = {id: i, content: aParsed[i]['order_id'], start: aParsed[i]['order_date']};
+          var oV = {id: aParsed[i]['order_id'], content: '<img src="http://www.google.com/s2/favicons?domain='+aParsed[i]['shop_url']+'" /><span class="ui__vis-group__item-toggle">'+aParsed[i]["order_id"]+'</span>', start: aParsed[i]['order_date']};
           aV.push(oV);
         }
+
 
         // set items for visualisation
         var items = new vis.DataSet(aV);
@@ -243,6 +244,22 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
 
         // Create a Timeline
         var timeline = new vis.Timeline(container, items, options);
+
+        // timeline events
+        timeline.on('select', function (properties) {
+
+          var items = properties['items'];
+          var $the_target = $('.table-inbox');
+          var $the_rows = $('tr', $the_target);
+
+          $the_rows.removeClass('ui-highlighted');
+          if(items.length > 0) {
+            var $el = $the_target.find("[data-orderid='" + items[0] + "']").eq(0);
+            $el.parents('tr').eq(0).addClass('ui-highlighted');
+            $('html, body').animate({scrollTop: $el.offset().top}, 500);
+          }
+
+        });
 
       });
 
@@ -257,7 +274,6 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
     var messageBody = getBody(message.payload).toString();
     var oMessage = {};
 
-    console.log('            ');
     // regex collection
     // aliexpress regex:
     // $1 - order id,

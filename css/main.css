@@ -1,0 +1,31 @@
+/* layout */
+.header {
+  background: #D9EDF7;
+  padding: 1em;
+}
+
+/* elements */
+#visualization {
+  margin: 20px 0;
+}
+
+/* ui */
+.ui-highlighted {
+  background-color: #FFF785;
+  border-color: #FFC200;
+}
+
+.ui__vis-group__item-toggle {
+  font-size: 0.9em;
+  text-decoration: none;
+  margin: 0 5px;
+}
+
+.ui__table__cellimage {
+  float: left;
+  margin: 0 0 0 -22px;
+}
+
+.ui__table__celltitle {
+  overflow: hidden;
+}
