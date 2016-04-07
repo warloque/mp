@@ -21,6 +21,9 @@
         white-space: nowrap;
       }
     </style>
+
+    <link href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAABILAAASCwAAAAAAAAAAAAAAqkRyAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRyAKpEQwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKpELACqRAYAAAAAAAAAAAAAAAAAAAAAAKpEQwCqREMAAAAAAAAAAAAAAAAAAAAAAKpEFgCqRF0AqkSGAKpEjACqRKgAqkSXAKpEEgAAAAAAAAAAAAAAAACqREMAqkRDAAAAAAAAAAAAqkUAAKpEVwCqRLwAqkShAKpEbwCqRGYAqkS6AKpEwwCqRIMAqkQCAAAAAAAAAAAAqkRDAKpEQwAAAAAAAAAAAKpEWwCqRLsAqkRGAKtEAQAAAAAAqkQDAKpEYwCqRCEAq0IAAAAAAAAAAAAAAAAAAKpEQwCqREMAAAAAAKpEHgCqRL4AqkRAAAAAAACqRCsAqkRvAKpEXQCqRD4AqkR4AKpEVwCqRBMAAAAAAAAAAACqREMAqkRDAAAAAACqRGwAqkSVAKdCAACqRCwAqkS/AKpEoACqRJEAqkTAAKpEugCqRLQAqkS4AKpEMQAAAAAAqkRDAKpEQwAAAAAAqkSZAKpEXAAAAAAAqkR9AKpEtQCqRAkAqkUBAKpElQCqRJUAqkQFAKpEhACqRKoAqkQCAKpEQwCqREMAAAAAAKpEowCqRE8AAAAAAKpEkQCqRJ0AAAAAAAAAAACqRHUAqkSVAAAAAACqRDEAqkTDAKpEIACqREMAqkRDAAAAAACqRI4AqkRqAAAAAACqRHQAqkS6AKpEFQCqRAYAqkSiAKpElQAAAAAAqkQpAKpEwwCqRCYAqkRDAKpEQwAAAAAAqkRVAKpErQCqRAYAqkQcAKpEtACqRLYAqkSvAKpEsQCqRJUAAAAAAKpEXwCqRLoAqkQIAKpEQwCqREMAAAAAAKpECgCqRK0AqkRzAKlEAQCqRBMAqkRNAKpEOwCqRBgAqkQtAKpEKQCqRLoAqkRqAAAAAACqREMAqkRDAAAAAAAAAAAAqkQrAKpEuACqRIcAqkQhAKpEAQCpQwAAqkQVAKpEYQCqRLwAqkSQAKpEBwAAAAAAqkRDAKpEQwAAAAAAAAAAAAAAAACqRCAAqkSQAKpEwgCqRLAAqkSsAKpEwQCqRLYAqkRgAKpEBQAAAAAAAAAAAKpEQwCqREMAAAAAAAAAAAAAAAAAAAAAAKhDAACqRBwAqkREAKpESwCqRDIAqkQHAAAAAAAAAAAAAAAAAAAAAACqREMAqkRyAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRyAAAAAH+eAAB4DgAAYAYAAGEOAABEBgAAQAIAAEgAAABJkAAASBAAAEAQAABAAgAAYAIAAHAGAAB4HgAAAAAAAA==" rel="icon" type="image/x-icon">
+
   </head>
   <body>
 
@@ -121,10 +124,10 @@
         <td>
           <a href="#" class="message-link" data-toggle="modal" id="message-link-{{messageId}}" data-orderid="{{order_id}}">
             <strong>{{order_id}}</strong><br />
-            {{order_title}}
+            {{{order_title}}}
           </a>
         </td>
-        <td class="nowrap">{{order_date}} / <small>{{order_time}}</small></td>
+        <td class="nowrap">{{order_date}}</td>
       </tr>
     </script>
 
@@ -134,12 +137,13 @@
     <script src="js/utils/h5utils.js"></script>
     <script src="js/utils/utils.js"></script>
 
-    <!--<script src="js/utils/diff_match_patch.js"></script>-->
+    <!--<script src="js/plugins/datejs/globalization/ru-RU.js"></script>-->
+    <script src="js/plugins/datejs/date.js"></script>
     <script src="js/plugins/vis/vis.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
     <script src="bower_components/mustache/mustache.min.js"></script>
 
-    <script src="main.js"></script>
+    <script src="js/main.js"></script>
     <script src="config.js"></script>
     <script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
 
