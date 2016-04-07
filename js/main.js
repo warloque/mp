@@ -8,7 +8,7 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
       Messages = {};
 
   // Your Client ID can be retrieved from your project in the Google
-  USER_QUERY = decodeURIComponent(getUrlVars()["q"]);
+  USER_QUERY = (getUrlVars()["q"]) ? decodeURIComponent(getUrlVars()["q"]).split(',') : ''; //2do: allow sending alphanumeric and commas only
   USER_MAXRESULTS = getUrlVars()["maxResults"];
   USER_LABEL = decodeURIComponent(getUrlVars()["label"]);
 
@@ -71,10 +71,72 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
 
     switch (page) {
       case ('inbox'):
+        console.log(' >>> displaying inbox');
         gapi.client.load('gmail', 'v1', displayInbox);
         break;
       case ('parsed'):
-        gapi.client.load('gmail', 'v1', displayParsed);
+        console.log(' >>> displaying parsed');
+        gapi.client.load('gmail', 'v1', function(){
+
+          // visualised objects array
+          aV = [];
+          // parsed messages array
+          aParsed = [];
+          // flagged-as-matched messages array
+          aFlagged = []
+          // regex collection
+          oRegexes = {
+            'a':[
+              {
+                'name':['aliexpress','aliexpress.com'],
+                'structure':['id','title','url','name','date','time'],
+                'pattern':[
+                  'order_id=(\\d+).*?<strong>(.*)<\/strong><\/a>.*?<a.*?href="(.*?)">(.*)<\/a>.*?([0-9]+.[0-9]+.[0-9]+)\\s([0-9]+:[0-9]+)',
+                  'order_id=(\\d+).*?<\/a><span.*?><strong>(.*?)<\/strong>.*?<a.*?href="(.*?)">(.*)<\/a>.*?([0-9]+.[0-9]+.[0-9]+)\\s([0-9]+:[0-9]+)'
+                ]
+              }
+            ],
+            'e':[
+              {
+                'name':['exist','exist.ua'],
+                'structure':['title','id','date','time','url','name'],
+                'pattern':[
+                  '<font color="white" size="2">(.*?)№.*?(\\w+-.*?)<\/font>.*?Дата:.*?(\\d+.\\d+.\\d+)\\s?(\\d+:\\d+).*?http:\/\/www.(exist.ua).*?2006.*?[0-9]+(.*)?<\/font>'
+                ]
+              }
+            ],
+            'r':[
+              {
+                'name':['rozetka','rozetka.ua'],
+                'structure':['id','title','url','name','date','time'],
+                'pattern':[
+                  'order_id=(\\d+).*?<strong>(.*)<\/strong><\/a>.*?<a.*?href="(.*?)">(.*)<\/a>.*?([0-9]+.[0-9]+.[0-9]+)\\s([0-9]+:[0-9]+)',
+                  'order_id=(\\d+).*?<\/a><span.*?><strong>(.*?)<\/strong>.*?<a.*?href="(.*?)">(.*)<\/a>.*?([0-9]+.[0-9]+.[0-9]+)\\s([0-9]+:[0-9]+)',
+                  'td colspan="3".*\\n\\t\\s*?<a.*\\n\\t\\s*?<span.*\\n(.*)\\n\\s*?.*\\s*?.*\\s*?.*\\s*?.*\\s*?<tr>\\s*<td.*\\s*?<span.*\\s*?(\\d+)<span.*>(.*?)<\/span>'
+                ]
+              }
+            ],
+            'o':[
+              {
+                'name':['ozon','ozon.ru'],
+                'structure':['id','date','total','title','extra'],
+                'pattern':[
+                  '.*№.*?(\\d+-\\d+.*?).*?от.*?(\\d+.\\d+.\\d+).*?в размере.*?(.*?)рублей.*?.(Ваш заказ.*).*?.(Ожидаемая дата доставки \\d+\\s.*?\\s\\d+\\s.*)'
+                ]
+              }
+            ]
+          };
+          // parse messages for every item in search query
+          for (iDP = 0, lenDP = (USER_QUERY.length - 1); iDP <= lenDP; ++iDP) {
+            displayParsed(iDP);
+          }
+          // visualize parsed objects array
+          setTimeout(function(){
+            visualize('visualization', aV);
+          }, 500);
+
+        }
+        );
         break;
       default:
         gapi.client.load('gmail', 'v1', displayInbox);
@@ -94,7 +156,7 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
       //console.log(labels);
 
       for (var key_super in labels) {
-        var row = $('#option-template').html()
+        var row = $('#option-template').html();
         var renderedRow = Mustache.render(row, {
           messageLabelId : labels[key_super]['id'],
           messageLabelType : labels[key_super]['type'],
@@ -108,74 +170,74 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
   }
 
   function displayInbox() {
-    var request = gapi.client.gmail.users.messages.list({
-      userId: 'me',
-      labelIds: (USER_LABEL) ? USER_LABEL: 'INBOX',
-      maxResults: (USER_MAXRESULTS) ? USER_MAXRESULTS: 1,
-      'q': (USER_QUERY) ? USER_QUERY: ''
-    });
 
     listLabels();
 
-    request.execute(function(response) {
-      var promises = [];
+    for (var i = 0, len = (USER_QUERY.length - 1); i <= len; i++) {
 
-      $.each(response.messages, function() {
-        var messageRequest = gapi.client.gmail.users.messages.get({
-          userId: 'me',
-          id: this.id
+      var request = gapi.client.gmail.users.messages.list({
+        userId: 'me',
+        labelIds: (USER_LABEL) ? USER_LABEL : 'INBOX',
+        maxResults: (USER_MAXRESULTS) ? USER_MAXRESULTS : 1,
+        'q': (USER_QUERY) ? USER_QUERY[i] : ''
+      });
+
+      request.execute(function (response) {
+
+        var promises = [];
+
+        $.each(response.messages, function () {
+          var messageRequest = gapi.client.gmail.users.messages.get({
+            userId: 'me',
+            id: this.id
+          });
+          // Since Google api is asyncronous, we need to wrap all server responses in a Promise.all()
+          var promise = $.Deferred();
+          promises.push(promise);
+          messageRequest.execute(function (message) {
+            // Save the message in a collection
+            Messages[message.id] = message;
+            promise.resolve(message);
+          });
+
         });
 
-        // Since Google api is asyncronous, we need to wrap all server responses in a Promise.all()
-        var promise = $.Deferred();
-        promises.push(promise);
-
-        messageRequest.execute(function(message) {
-          // Save the message in a collection 
-          Messages[message.id] = message;
-          promise.resolve(message);
+        $.when.all(promises).then(function (messages) {
+          // Sort messages by date in descending order
+          messages.sort(function (a, b) {
+            var d1 = new Date(getHeader(a.payload.headers, 'Date')).valueOf();
+            var d2 = new Date(getHeader(b.payload.headers, 'Date')).valueOf();
+            return d1 < d2 ? 1 : (d1 > d2 ? -1 : 0);
+          });
+          // Finally, process the messages
+          messages.forEach(function (message) {
+            processMessage(message);
+          })
         });
 
       });
 
-      $.when.all(promises).then(function(messages){ 
-
-        // Sort messages by date in descending order
-        messages.sort(function(a, b) {
-          var d1 = new Date(getHeader(a.payload.headers, 'Date')).valueOf();
-          var d2 = new Date(getHeader(b.payload.headers, 'Date')).valueOf();
-          return d1 < d2 ? 1 : (d1 > d2 ? -1 : 0);
-        });
-
-        // Finally, process the messages
-        messages.forEach(function(message){
-          processMessage(message);
-        })
-
-      });
-
-    });
+    }
   }
 
 
-  function displayParsed() {
-
-    console.log('displaying parsed');
-    var aParsed = [];
-
-    var request = gapi.client.gmail.users.messages.list({
-      userId: 'me',
-      labelIds: (USER_LABEL) ? USER_LABEL: 'INBOX',
-      maxResults: (USER_MAXRESULTS) ? USER_MAXRESULTS: 1,
-      'q': (USER_QUERY) ? USER_QUERY: ''
-    });
+  function displayParsed(iii) {
 
     listLabels();
 
-    request.execute(function(response) {
+    var request = gapi.client.gmail.users.messages.list({
+      userId: 'me',
+      labelIds: (USER_LABEL) ? USER_LABEL : 'INBOX',
+      maxResults: (USER_MAXRESULTS) ? USER_MAXRESULTS : 1,
+      'q': (USER_QUERY) ? USER_QUERY[iii] : ''
+    });
+
+    request.execute(function (response) {
+
       var promises = [];
 
-      $.each(response.messages, function() {
+      $.each(response.messages, function () {
+
         var messageRequest = gapi.client.gmail.users.messages.get({
           userId: 'me',
           id: this.id
@@ -184,8 +246,7 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
         // Since Google api is asyncronous, we need to wrap all server responses in a Promise.all()
         var promise = $.Deferred();
         promises.push(promise);
-
-        messageRequest.execute(function(message) {
+        messageRequest.execute(function (message) {
           // Save the message in a collection
           Messages[message.id] = message;
           promise.resolve(message);
@@ -193,157 +254,178 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
 
       });
 
-      $.when.all(promises).then(function(messages){
+      $.when.all(promises).then(function (messages) {
 
         // Sort messages by date in descending order
-        messages.sort(function(a, b) {
+        messages.sort(function (a, b) {
           var d1 = new Date(getHeader(a.payload.headers, 'Date')).valueOf();
           var d2 = new Date(getHeader(b.payload.headers, 'Date')).valueOf();
           return d1 < d2 ? 1 : (d1 > d2 ? -1 : 0);
         });
 
-        var aParsed = [];
-
         // Finally, process the messages
-        messages.forEach(function(message){
-
-          var pm = parseMessage(message);
-
-          if (!$.isEmptyObject(pm)) {
-            aParsed.push(pm);
-          }
-
-        })
-
-        console.log(aParsed);
-
-        // Visualise parsed data
-
-        // DOM element where the Timeline will be attached
-        var container = document.getElementById('visualization');
-
-        // Create a DataSet (allows two way data-binding)
-        /*var items = new vis.DataSet([
-          {id: 1, content: 'item 1', start: '2013-04-20'},
-          {id: 2, content: 'item 4', start: '2013-04-16', end: '2013-04-19'},
-          {id: 3, content: 'item 6', start: '2013-04-27'}
-        ]);*/
-
-        var aV = [];
-        for(var i= 0, len=(aParsed.length-1); i<len; i++){
-          var oV = {id: aParsed[i]['order_id'], content: '<img src="http://www.google.com/s2/favicons?domain='+aParsed[i]['shop_url']+'" /><span class="ui__vis-group__item-toggle">'+aParsed[i]["order_id"]+'</span>', start: aParsed[i]['order_date']};
-          aV.push(oV);
-        }
-
-
-        // set items for visualisation
-        var items = new vis.DataSet(aV);
-
-        // Configuration for the Timeline
-        var options = {};
-
-        // Create a Timeline
-        var timeline = new vis.Timeline(container, items, options);
-
-        // timeline events
-        timeline.on('select', function (properties) {
-
-          var items = properties['items'];
-          var $the_target = $('.table-inbox');
-          var $the_rows = $('tr', $the_target);
-
-          $the_rows.removeClass('ui-highlighted');
-          if(items.length > 0) {
-            var $el = $the_target.find("[data-orderid='" + items[0] + "']").eq(0);
-            $el.parents('tr').eq(0).addClass('ui-highlighted');
-            $('html, body').animate({scrollTop: $el.offset().top}, 500);
-          }
-
+        messages.forEach(function (message, iDP) {
+          var pm = parseMessage(message,iii);
         });
 
       });
 
     });
+
   }
 
 
 
-  function parseMessage(message) {
+  function visualize(jContainer,aMessages) {
+
+    // visualisation dom
+    var container = document.getElementById(jContainer);
+
+    // set items for visualisation
+    var items = new vis.DataSet(aMessages);
+
+    // Configuration for the Timeline
+    var options = {};
+
+    // Create a Timeline
+    var timeline = new vis.Timeline(container, items, options);
+
+    // timeline events
+    timeline.on('select', function (properties) {
+      var items = properties['items'];
+      var $the_target = $('.table-inbox');
+      var $the_rows = $('tr', $the_target);
+      $the_rows.removeClass('ui-highlighted');
+      if (items.length > 0) {
+        var $el = $the_target.find("[data-orderid='" + items[0] + "']").eq(0);
+        $el.parents('tr').eq(0).addClass('ui-highlighted');
+        $('html, body').animate({scrollTop: $el.offset().top}, 500);
+      }
+    });
+
+  }
+
+
+
+  function parseMessage(message,i) {
 
     var row = $('#row-parsed-template').html();
     var messageBody = getBody(message.payload).toString();
     var oMessage = {};
-
-    // regex collection
-    // aliexpress regex:
-    // $1 - order id,
-    // $2 - order title,
-    // $3 - shop url,
-    // $4 - shop name,
-    // $5 - order date,
-    // $6 - order time
     var regexes = [];
-    var regex1 = 'order_id=(\\d+).*?<strong>(.*)<\/strong><\/a>.*?<a.*?href="(.*?)">(.*)<\/a>.*?([0-9]+.[0-9]+.[0-9]+)\\s([0-9]+:[0-9]+)';
-    regexes.push(regex1);
-    var regex2 = 'order_id=(\\d+).*?<\/a><span.*?><strong>(.*?)<\/strong>.*?<a.*?href="(.*?)">(.*)<\/a>.*?([0-9]+.[0-9]+.[0-9]+)\\s([0-9]+:[0-9]+)';
-    regexes.push(regex2);
+    var structure = [];
+
+    if (aFlagged.indexOf(message.id) > -1) {
+      console.log(' __added to aFlagged ___ ' + message.id);
+      return;
+    }
+
+    aFlagged.push(message.id);
+
+    //console.log('     ');
+    //console.log('i = ' + i);
+    //console.log('MESSAGE ID = ' + message['id']);
+    //console.log('search string = ' + USER_QUERY[i]);
+
+    // looking for index letter match
+    for (var k in oRegexes) {
+      // if first letter matches index
+      if (k === USER_QUERY[i].charAt(0)) {
+        // look for full match
+        for (var key in oRegexes[k]) {
+          // get exact pattern
+          if (key.indexOf(USER_QUERY[i]) != 0) {
+            var set = oRegexes[k];
+            var result = set.filter(function (entry) {
+              // match pattern names against search query
+              if (entry.name.indexOf(USER_QUERY[i]) > -1) {
+                return entry.name;
+              }
+            });
+            regexes = result[0]['pattern'];
+            structure = result[0]['structure'];
+          }
+        }
+      }
+    }
 
     // preprocess message body (remove line feed/carriage return) to nicely play with js regex
     var str = messageBody.replace(new RegExp( "\\r|\\n", "g" ), "   ");
+    //console.log(' >> message str is: >>');
+    //console.dir(str);
 
-    for(var i = 0; i < regexes.length; i++) {
-      var this_pattern = regexes[i];
+    for(var ii = 0; ii < regexes.length; ii++) {
+
+      var this_pattern = regexes[ii];
       var this_regexp = new RegExp(this_pattern);
-
       var this_result = (str.match(this_regexp)) ? str.match(this_regexp) : [];
 
       if(this_result.length > 0 ) {
 
-        if(this_result[1]){
-          //console.log(' MATCH 1: > ' + this_result[1]);
-          oMessage['order_id'] = this_result[1];
-        }
-        if(this_result[2]) {
-          //console.log(' MATCH 2: > ' + this_result[2].trim());
-          oMessage['order_title'] = this_result[2].trim();
-        }
-        if(this_result[3]) {
-          //console.log(' MATCH 3: > ' + this_result[3]);
-          oMessage['shop_url'] = this_result[3];
-        }
-        if(this_result[4]) {
-          //console.log(' MATCH 4: > ' + this_result[4]);
-          oMessage['shop_name'] = this_result[4];
-        }
-        if(this_result[5]) {
-          //console.log(' MATCH 5: > ' + this_result[5]);
-          oMessage['order_date'] = this_result[5];
-        }
-        if(this_result[6]) {
-          //console.log(' MATCH 6: > ' + this_result[6]);
-          oMessage['order_time'] = this_result[6];
+        //console.log(' >>>>> this_result >>>> ');
+        //console.dir(this_result);
+
+        // save matched pattern parts from message body into oMessage fields
+        for (var iRes = 1; iRes<this_result.length; ++iRes) {
+
+          //console.log(' | ' + iRes + ' ' + structure[(iRes-1)]);
+
+          if(structure[(iRes-1)] == 'date'){
+
+            var oDate = new Date(Date.parse(this_result[iRes]));
+            oMessage['date'] = oDate;
+            oMessage['order_date'] = moment(oDate).format('DD MMM, YYYY');
+
+          } else {
+
+            oMessage[structure[(iRes-1)]] = this_result[iRes].trim();
+
+          }
+
+          // 2do: add time to Date object oMessage['order_date']
+          /*if(structure[(iRes-1)] == 'time'){
+
+            var out_time = ((this_result[iRes])) ? this_result[iRes] : '00:00';
+
+            //var timeFields   = out_time.split( ':' );
+            //myDateObj.setHours( parseInt( timeFields[ 0 ], 10 ) );
+            //myDateObj.setMinutes( parseInt( timeFields[ 1 ], 10 ) );
+
+            //oMessage['order_date'] = moment(new Date(out_date+' '+out_time)).format('DD MMM, YYYY HH:mm');
+            oMessage['order_date'] = moment(myDateObj).format('DD MMM, YYYY HH:mm');
+
+            console.log(' oMessage['order_date'] = ' + oMessage['order_date']);
+          }*/
+
         }
 
       }
 
     }
 
+
     if (!$.isEmptyObject(oMessage)) {
 
+      // append object to array for visualization part
+      var oV = {
+        id: oMessage['id'],
+        content: '<img src="http://www.google.com/s2/favicons?domain=' + oMessage['url'] + '" /><span class="ui__vis-group__item-toggle">' + oMessage["id"] + '</span>',
+        start: oMessage['date']
+      };
+      aV.push(oV);
+
+      // render table item
       var renderedRow = Mustache.render(row, {
         messageId : message.id,
-        shop_logo : oMessage.shop_url,
-        shop_name : oMessage.shop_name,
-        order_id : oMessage.order_id,
+        shop_logo : oMessage.url,
+        shop_name : oMessage.name,
+        order_id : oMessage.id,
         order_date : oMessage.order_date,
-        order_time : oMessage.order_time,
-        order_title : oMessage.order_title,
+        order_title : oMessage.title
       });
       $('.table-inbox tbody').append(renderedRow);
 
     }
-
-    return oMessage;
 
   }
 
@@ -413,70 +495,24 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
     // show message in modal
     $('.table-inbox tbody').on('click', 'a.message-link', function(e) {
       var id, title, iframe, messageBody;
-
       id = $(this).attr('id').split('-')[2];
-      
       title = getHeader(Messages[id].payload.headers, 'Subject');
+      // Set modal title
       $('#myModalTitle').text(title);
-
       iframe = $('#message-iframe')[0].contentWindow.document;
       // The message body goes to the iframe's content
       messageBody = getBody(Messages[id].payload);
       $('body', iframe).html(messageBody);
-      
       // Show the modal window
       $('#message-modal').modal('show');
-
     });
-
-
-    // parse message in modal
-    /*$('.table-inbox tbody').on('click', 'a.parse-link', function(e) {
-
-      var id, title, messageBody, messageBodyRaw;
-      id = $(this).data('id').split('-')[2];
-      title = getHeader(Messages[id].payload.headers, 'Subject');
-      messageBody = getBody(Messages[id].payload);
-      messageBodyRaw = Messages[id].payload;
-      //console.log(messageBody);
-
-      title = getHeader(Messages[id].payload.headers, 'Subject');
-      $('#myModalTitle').text(title);
-
-      if(!localStorage.getItem('msg')){
-        localStorage.setItem('msg', messageBody);
-        console.log('msg set');
-      }
-
-      the_msg = (localStorage.getItem('msg')) ? localStorage.getItem('msg') : messageBody;
-      iframe = $('#message-iframe')[0].contentWindow.document;
-      iframeBody = $('body', iframe);
-      iframeBody.html('<section contenteditable="true" id="editable">'+the_msg+'</section><div class="row"><input type="button" id="clear" value="Clear editor" class="btn btn-default" /><input type="button" id="save-template" value="Save template" class="btn btn-default" /></div>');
-
-      initEditable(iframeBody.find('#editable'), iframeBody.find('#clear'), iframeBody.find('#save-template'));
-
-      //console.log('inited editable');
-
-      // Show the modal window
-      $('#message-modal').modal('show');
-
-      /!*$('#message-modal').on('hidden.bs.modal', function (e) {
-        localStorage.clear();
-        console.clear();
-        console.log('editable clear');
-      });*!/
-
-    });*/
-
 
 
     // parse bulk
     $('#js_ui-parse').on('click', function(e) {
-
       $('#filters')
         .append('<input type="hidden" name="page" value="parsed" />')
         .submit();
-
     });
 
   }
