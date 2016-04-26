@@ -8,19 +8,20 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
       Messages = {};
 
   // Your Client ID can be retrieved from your project in the Google
-  USER_QUERY = (getUrlVars()["q"]) ? decodeURIComponent(getUrlVars()["q"]).split(',') : ''; //2do: allow sending alphanumeric and commas only
-  USER_MAXRESULTS = getUrlVars()["maxResults"];
-  USER_LABEL = decodeURIComponent(getUrlVars()["label"]);
+  sUSER_QUERY = getUrlVars()["q"];
+  aUSER_QUERY = (sUSER_QUERY) ? decodeURIComponent(sUSER_QUERY).split(',') : ''; //2do: allow sending alphanumeric and commas only
+  sUSER_MAXRESULTS = getUrlVars()["maxResults"];
+  sUSER_LABEL = decodeURIComponent(getUrlVars()["label"]);
 
   // update interface
-  if(USER_QUERY !== 'undefined'){
-    document.getElementById('q').value = USER_QUERY;
+  if(aUSER_QUERY !== 'undefined'){
+    document.getElementById('q').value = aUSER_QUERY;
   }
-  if(USER_MAXRESULTS !== 'undefined'){
-    document.getElementById('maxResults').value = USER_MAXRESULTS;
+  if(sUSER_MAXRESULTS !== 'undefined'){
+    document.getElementById('maxResults').value = sUSER_MAXRESULTS;
   }
-  if(USER_LABEL !== 'undefined'){
-    document.getElementById('label').value = USER_LABEL;
+  if(sUSER_LABEL !== 'undefined'){
+    document.getElementById('label').value = sUSER_LABEL;
   }
 
   function config(config) {
@@ -70,10 +71,15 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
     var page = (url.indexOf('page') > -1) ? /page=([^&]+)?/.exec(url)[1] : 'inbox'; // find 'page' param, otherwise show 'inbox' page
 
     switch (page) {
+
       case ('inbox'):
         console.log(' >>> displaying inbox');
-        gapi.client.load('gmail', 'v1', displayInbox);
+
+        // display inbox
+        gapi.client.load('gmail', 'v1', function(){ displayInbox(); listLabels(); });
+
         break;
+
       case ('parsed'):
         console.log(' >>> displaying parsed');
         gapi.client.load('gmail', 'v1', function(){
@@ -85,61 +91,38 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
           // flagged-as-matched messages array
           aFlagged = []
           // regex collection
-          oRegexes = {
-            'a':[
-              {
-                'name':['aliexpress','aliexpress.com'],
-                'structure':['id','title','url','name','date','time'],
-                'pattern':[
-                  'order_id=(\\d+).*?<strong>(.*)<\/strong><\/a>.*?<a.*?href="(.*?)">(.*)<\/a>.*?([0-9]+.[0-9]+.[0-9]+)\\s([0-9]+:[0-9]+)',
-                  'order_id=(\\d+).*?<\/a><span.*?><strong>(.*?)<\/strong>.*?<a.*?href="(.*?)">(.*)<\/a>.*?([0-9]+.[0-9]+.[0-9]+)\\s([0-9]+:[0-9]+)'
-                ]
-              }
-            ],
-            'e':[
-              {
-                'name':['exist','exist.ua'],
-                'structure':['title','id','date','time','url','name'],
-                'pattern':[
-                  '<font color="white" size="2">(.*?)№.*?(\\w+-.*?)<\/font>.*?Дата:.*?(\\d+.\\d+.\\d+)\\s?(\\d+:\\d+).*?http:\/\/www.(exist.ua).*?2006.*?[0-9]+(.*)?<\/font>'
-                ]
-              }
-            ],
-            'r':[
-              {
-                'name':['rozetka','rozetka.ua'],
-                'structure':['id','title','url','name','date','time'],
-                'pattern':[
-                  'order_id=(\\d+).*?<strong>(.*)<\/strong><\/a>.*?<a.*?href="(.*?)">(.*)<\/a>.*?([0-9]+.[0-9]+.[0-9]+)\\s([0-9]+:[0-9]+)',
-                  'order_id=(\\d+).*?<\/a><span.*?><strong>(.*?)<\/strong>.*?<a.*?href="(.*?)">(.*)<\/a>.*?([0-9]+.[0-9]+.[0-9]+)\\s([0-9]+:[0-9]+)',
-                  'td colspan="3".*\\n\\t\\s*?<a.*\\n\\t\\s*?<span.*\\n(.*)\\n\\s*?.*\\s*?.*\\s*?.*\\s*?.*\\s*?<tr>\\s*<td.*\\s*?<span.*\\s*?(\\d+)<span.*>(.*?)<\/span>'
-                ]
-              }
-            ],
-            'o':[
-              {
-                'name':['ozon','ozon.ru'],
-                'structure':['id','date','total','title','extra'],
-                'pattern':[
-                  '.*№.*?(\\d+-\\d+.*?).*?от.*?(\\d+.\\d+.\\d+).*?в размере.*?(.*?)рублей.*?.(Ваш заказ.*).*?.(Ожидаемая дата доставки \\d+\\s.*?\\s\\d+\\s.*)'
-                ]
-              }
-            ]
-          };
-          // parse messages for every item in search query
-          for (iDP = 0, lenDP = (USER_QUERY.length - 1); iDP <= lenDP; ++iDP) {
-            displayParsed(iDP);
-          }
-          // visualize parsed objects array
-          setTimeout(function(){
-            visualize('visualization', aV);
-          }, 500);
 
-        }
-        );
+
+          // parse messages for every item in search query
+          var aPromises = [];
+
+          for (var iDP = 0, lenDP = (aUSER_QUERY.length - 1); iDP <= lenDP; ++iDP) {
+            the_promise = $.Deferred();
+            aPromises.push(the_promise);
+            displayParsed(iDP,the_promise);
+          }
+
+          $.when.all(aPromises).then(function () {
+            // load visualization if any parsed data available
+            if(!isEmpty(aPromises[1])) {
+              visualize('visualization', aV);
+            } else {
+              $('#alert')
+                .removeClass('hidden').addClass('alert alert-warning')
+                .html('nothing parsed');
+              $('.table-inbox').addClass('hidden');
+            }
+          });
+
+          // ui labels
+          listLabels();
+
+        });
         break;
+
       default:
         gapi.client.load('gmail', 'v1', displayInbox);
+
     }
 
   }
@@ -161,7 +144,7 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
           messageLabelId : labels[key_super]['id'],
           messageLabelType : labels[key_super]['type'],
           messageLabelName : labels[key_super]['name'],
-          messageLabelSelected : (USER_LABEL === labels[key_super]['id']) ? 'selected' : ''
+          messageLabelSelected : (sUSER_LABEL === labels[key_super]['id']) ? 'selected' : ''
         });
         $('#label').append(renderedRow);
       }
@@ -169,17 +152,17 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
     });
   }
 
+
+
   function displayInbox() {
 
-    listLabels();
-
-    for (var i = 0, len = (USER_QUERY.length - 1); i <= len; i++) {
+    for (var i = 0, len = (aUSER_QUERY.length - 1); i <= len; i++) {
 
       var request = gapi.client.gmail.users.messages.list({
         userId: 'me',
-        labelIds: (USER_LABEL) ? USER_LABEL : 'INBOX',
-        maxResults: (USER_MAXRESULTS) ? USER_MAXRESULTS : 1,
-        'q': (USER_QUERY) ? USER_QUERY[i] : ''
+        labelIds: (sUSER_LABEL) ? sUSER_LABEL : 'INBOX',
+        maxResults: (sUSER_MAXRESULTS) ? sUSER_MAXRESULTS : 1,
+        'q': (aUSER_QUERY) ? aUSER_QUERY[i] : ''
       });
 
       request.execute(function (response) {
@@ -202,34 +185,36 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
 
         });
 
-        $.when.all(promises).then(function (messages) {
-          // Sort messages by date in descending order
-          messages.sort(function (a, b) {
-            var d1 = new Date(getHeader(a.payload.headers, 'Date')).valueOf();
-            var d2 = new Date(getHeader(b.payload.headers, 'Date')).valueOf();
-            return d1 < d2 ? 1 : (d1 > d2 ? -1 : 0);
-          });
-          // Finally, process the messages
-          messages.forEach(function (message) {
-            processMessage(message);
+        $.when.all(promises)
+          .then(function (messages) {
+            // Sort messages by date in descending order
+            messages.sort(function (a, b) {
+              var d1 = new Date(getHeader(a.payload.headers, 'Date')).valueOf();
+              var d2 = new Date(getHeader(b.payload.headers, 'Date')).valueOf();
+              return d1 < d2 ? 1 : (d1 > d2 ? -1 : 0);
+            });
+            // Finally, process the messages
+            messages.forEach(function (message) {
+              processMessage(message);
+            });
           })
-        });
 
       });
 
     }
+    
   }
 
 
-  function displayParsed(iii) {
 
-    listLabels();
+  function displayParsed(iii,the_promise) {
 
     var request = gapi.client.gmail.users.messages.list({
       userId: 'me',
-      labelIds: (USER_LABEL) ? USER_LABEL : 'INBOX',
-      maxResults: (USER_MAXRESULTS) ? USER_MAXRESULTS : 1,
-      'q': (USER_QUERY) ? USER_QUERY[iii] : ''
+      labelIds: (sUSER_LABEL) ? sUSER_LABEL : 'INBOX',
+      // disabling with maxResults for parsing messages (2do: remove it or redesign limit parameter)
+      //maxResults: (sUSER_MAXRESULTS) ? sUSER_MAXRESULTS : 1,
+      'q': (aUSER_QUERY) ? aUSER_QUERY[iii] : ''
     });
 
     request.execute(function (response) {
@@ -254,21 +239,22 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
 
       });
 
-      $.when.all(promises).then(function (messages) {
-
-        // Sort messages by date in descending order
-        messages.sort(function (a, b) {
-          var d1 = new Date(getHeader(a.payload.headers, 'Date')).valueOf();
-          var d2 = new Date(getHeader(b.payload.headers, 'Date')).valueOf();
-          return d1 < d2 ? 1 : (d1 > d2 ? -1 : 0);
+      $.when.all(promises)
+        .then(function (messages) {
+          // Sort messages by date in descending order
+          messages.sort(function (a, b) {
+            var d1 = new Date(getHeader(a.payload.headers, 'Date')).valueOf();
+            var d2 = new Date(getHeader(b.payload.headers, 'Date')).valueOf();
+            return d1 < d2 ? 1 : (d1 > d2 ? -1 : 0);
+          });
+          // Finally, process the messages
+          messages.forEach(function (message, iDP) {
+            var pm = parseMessage(message,iii);
+          });
+        })
+        .then(function(){
+          the_promise.resolve();
         });
-
-        // Finally, process the messages
-        messages.forEach(function (message, iDP) {
-          var pm = parseMessage(message,iii);
-        });
-
-      });
 
     });
 
@@ -325,20 +311,20 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
     //console.log('     ');
     //console.log('i = ' + i);
     //console.log('MESSAGE ID = ' + message['id']);
-    //console.log('search string = ' + USER_QUERY[i]);
+    //console.log('search string = ' + aUSER_QUERY[i]);
 
     // looking for index letter match
-    for (var k in oRegexes) {
+    for (var k in GoogleAPIMailClient.oRegexes) {
       // if first letter matches index
-      if (k === USER_QUERY[i].charAt(0)) {
+      if (k === aUSER_QUERY[i].charAt(0)) {
         // look for full match
-        for (var key in oRegexes[k]) {
+        for (var key in GoogleAPIMailClient.oRegexes[k]) {
           // get exact pattern
-          if (key.indexOf(USER_QUERY[i]) != 0) {
-            var set = oRegexes[k];
+          if (key.indexOf(aUSER_QUERY[i]) != 0) {
+            var set = GoogleAPIMailClient.oRegexes[k];
             var result = set.filter(function (entry) {
               // match pattern names against search query
-              if (entry.name.indexOf(USER_QUERY[i]) > -1) {
+              if (entry.name.indexOf(aUSER_QUERY[i]) > -1) {
                 return entry.name;
               }
             });
@@ -351,8 +337,6 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
 
     // preprocess message body (remove line feed/carriage return) to nicely play with js regex
     var str = messageBody.replace(new RegExp( "\\r|\\n", "g" ), "   ");
-    //console.log(' >> message str is: >>');
-    //console.dir(str);
 
     for(var ii = 0; ii < regexes.length; ii++) {
 
@@ -362,9 +346,6 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
 
       if(this_result.length > 0 ) {
 
-        //console.log(' >>>>> this_result >>>> ');
-        //console.dir(this_result);
-
         // save matched pattern parts from message body into oMessage fields
         for (var iRes = 1; iRes<this_result.length; ++iRes) {
 
@@ -372,9 +353,26 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
 
           if(structure[(iRes-1)] == 'date'){
 
-            var oDate = new Date(Date.parse(this_result[iRes]));
+            // 2do: auto detect locale of a date string/body string of the message being parsed
+            console.log('дата исходная: ' + this_result[iRes]);
+            moment.locale('ru');
+            console.log('moment локаль: ' + moment.locale());
+            //var locale = window.navigator.userLanguage || window.navigator.language;
+            //console.log('locale = ' + locale);
+
+            var this_date_str = this_result[iRes].replace('г.','года');
+            //console.log( this_date_str );
+            var this_date = Date.create(this_date_str, 'ru').format('{yyyy}-{MM}-{dd}');
+            //console.log( this_date );
+            var oDate = new Date(this_date);
+            //console.log( 'oDate = ' + oDate );
+
             oMessage['date'] = oDate;
-            oMessage['order_date'] = moment(oDate).format('DD MMM, YYYY');
+            //oMessage['order_date'] = moment(oDate).format('DD MMM, YYYY');
+            oMessage['order_date'] = moment(oDate).format('LL');
+
+            //console.log(oDate);
+            //console.log(oMessage['order_date']);
 
           } else {
 
@@ -410,7 +408,8 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
       var oV = {
         id: oMessage['id'],
         content: '<img src="http://www.google.com/s2/favicons?domain=' + oMessage['url'] + '" /><span class="ui__vis-group__item-toggle">' + oMessage["id"] + '</span>',
-        start: oMessage['date']
+        //start: oMessage['date'] // date object
+        start: this_date // yyyy-mm-dd date string for vis plugin
       };
       aV.push(oV);
 
@@ -533,215 +532,3 @@ function handleClientLoad() {
   GoogleAPIMailClient.config(config);
   GoogleAPIMailClient.clientLoad();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*function initEditable(el,el_clear,el_save) {
-
-  // define editable
-  var editable = (el !== 'undefined') ? el : document.getElementById('editable');
-  var clear_btn = (el_clear !== 'undefined') ? el_clear : document.getElementById('clear');
-  var save_btn = (el_save !== 'undefined') ? el_save : document.getElementById('save-template');
-
-  a_msg = localStorage.getItem('msg');
-
-  // change blur to something in prod
-  addEvent(editable, 'blur', function () {
-    localStorage.setItem('msg', this.innerHTML);
-    document.designMode = 'off';
-    console.log('editable blur');
-  });
-
-  addEvent(editable, 'focus', function () {
-    document.designMode = 'on';
-    console.log('editable focus');
-  });
-
-  addEvent(clear_btn, 'click', function () {
-    localStorage.clear();
-    //window.location = window.location;
-    console.log('editable clear');
-  });
-
-  addEvent(save_btn, 'click', function () {
-    //localStorage.clear();
-    //window.location = window.location;
-    console.log('editable template saved');
-  });
-
-
-  /!*if (localStorage.getItem('msg')) {
-    editable.innerHTML = a_msg;
-    console.log('editable innerHTML set to a_msg: ' + a_msg);
-  }*!/
-
-
-  // editable select event
-  editable.on('selectstart', function (e) {
-
-    console.clear();
-    console.log('editable selectstart');
-
-    //$(document).on('mouseup', function(ee) {
-    $(iframe).on('mouseup', function(ee) {
-      //console.clear();
-      console.log('document mouse up');
-
-      //getselection();
-      getIframeSelection('message-iframe');
-      //replaceSelectedText('zzzz');
-    });
-
-  });
-
-
-  // editable selection function
-  function getselection(){
-    var selectedtext;
-    if(window.getSelection){
-      selectedtext=window.getSelection().toString();
-    }else if(document.selection.createRange){
-      selectedtext=document.selection.createRange().text;
-    }
-
-    console.log('selectedtext: ' + selectedtext);
-
-    var sel = window.getSelection();
-    if (sel.rangeCount > 0) {
-      var range = sel.getRangeAt(0);
-      var parentElement = range.commonAncestorContainer;
-      if (parentElement.nodeType == 3) {
-        parentElement = parentElement.parentNode;
-      }
-    }
-
-    console.log('parent: ' + parentElement);
-
-  }
-
-
-
-  // editable selection function (for iframe only)
-  function getIframeSelection(iframe) {
-
-    var sel = document.getElementById(iframe).contentDocument.getSelection();
-    var selectedtext = sel.toString();
-    if (sel.rangeCount > 0) {
-      var range = sel.getRangeAt(0);
-      var parentElement = range.commonAncestorContainer;
-      if (parentElement.nodeType == 3) {
-        parentElement = parentElement.parentNode;
-      }
-    }
-
-    console.log('selectedtext: ' + selectedtext);
-    console.log('parent: ' + parentElement);
-    console.log(parentElement);
-
-  }
-
-}*/
-
-
-
-
-// some diff tests
-/*
-var dmp = new diff_match_patch();
-
-var difftest1 = "_TREBULATE_ string to everything here boat _Smooth_ beat and every cat knows his _surname_";
-var difftest2 = "_BAD_ array for nothing special text boat _Nice_ drum or none dog follows her _name_";
-var difftest3 = "_MAD_ object enter there _Tough_ goat and every horse sees mine _sniff_";
-var difftest4 = "flowersome risky man doing art. footer";
-
-console.log('string1: ' + difftest1);
-console.log('string2: ' + difftest2);
-console.log('string3: ' + difftest3);
-console.log('string4: ' + difftest4);
-console.log('     ');
-
-
-//var differences = dmp.diff_main(difftest1, difftest2);
-//var ds = dmp.diff_prettyHtml(differences);
-//$('#test').html(ds);
-//console.log('     ');
-
-
-var diffs = dmp.diff_main(difftest1, difftest2);
-console.log('diffs > ');
-//console.log(dmp.diff_levenshtein(diffs));
-//console.log('     ');
-//console.log(diffs);
-
-
-//var patches = dmp.patch_make(diffs);
-//var patches = dmp.patch_make(difftest1, diffs);
-var patches = dmp.patch_make(difftest1, difftest2);
-//console.log('patch > ');
-//console.log(patches);
-//console.log('     ');
-
-
-//var dmp_cleaned = dmp.diff_cleanupEfficiency(diffs);
-//console.log('dmp_cleaned > ' + dmp_cleaned);
-//console.log('     ');
-
-//var dmp_cleaned = dmp.diff_cleanupEfficiency(diffs);
-//console.log('dmp_cleaned > ' + dmp_cleaned);
-//console.log('     ');
-
-
-//console.log('patch to Text');
-//console.log(dmp.patch_toText(patches));
-//console.log('#############################################');
-
-
-var patched = dmp.patch_apply(patches, difftest4);
-console.log('patch apply >');
-console.log(patched);
-console.log('     ');
-
-
-//console.log('match_main');
-//var the_text = '';
-//var the_pattern = '{{everything}}';
-//var the_loc = '1';
-//console.log(dmp.match_main(difftest1, the_pattern, the_loc));
-
-*/
-
-
-
-
-
-
-
-
-
-/* word replace tests */
-/*var str1 = 'Lorem {{VAR1}} dolor sit amet consectetur {{VAR2}} elit';
-var str2 = 'Lorme ipsum dolor sit maet cnsectetur adipiscing elot';
-var str3 = 'Super otherside text coming to another bulletin adopting bucks';
-
-console.log(str1);
-console.log(str2);
-console.log(str3);
-console.log('########################################');
-console.log(wordAccuracy(str1, str2));
-console.log(wordAccuracy(str1, str3));*/
