@@ -28,7 +28,7 @@ var addEvent = (function () {
 (function () {
 
 var pre = document.createElement('pre');
-pre.id = "view-source"
+pre.id = "view-source";
 
 // private scope to avoid conflicts with demos
 addEvent(window, 'click', function (event) {

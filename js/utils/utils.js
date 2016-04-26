@@ -1,3 +1,5 @@
+// utils.js
+
 /**
  *
  * getting url form values
@@ -10,6 +12,27 @@ function getUrlVars() {
   });
   return vars;
 }
+
+
+
+function isEmpty(obj) {
+  if(isSet(obj)) {
+    if (obj.length && obj.length > 0) {
+      return false;
+    }
+    for (var key in obj) {
+      if (hasOwnProperty.call(obj, key)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function isSet(val) {
+  return ((val != undefined) && (val != null));
+}
+
 
 
 /**
@@ -42,14 +65,12 @@ if (jQuery.when.all === undefined) {
  */
 Object.filter = function(obj, func) {
   var res = {};
-
   for(var key in obj) {
     // filter out own properties (not length) that pass the filter function
     if(obj.hasOwnProperty(key) && key !== "length" && func(key, obj[key])) {
       res[key] = obj[key];
     }
   }
-
   return res;
 };
 
@@ -59,34 +80,8 @@ Object.filter = function(obj, func) {
  * func to check if 'obj' key contains string from arg 'contains'
  *
  */
-Object.keyContains = function(obj, contains) {
+/*Object.keyContains = function(obj, contains) {
   return Object.filter(obj, function(i, v) {
     return ~i.indexOf(contains);
   });
-};
-
-
-
-/**
- *
- * func to word-by-word replace
- *
- */
-
-function wordAccuracy(str1, str2) {
-
-  var len = str1.length,
-    words1 = str1.split(' '),
-    words2 = str2.split(' ');
-
-  return {
-
-    fail: words1.filter(function(word, idx){
-      var the_match = word.match(/{{.+}}/gi);
-      if(the_match){
-        console.log('variable' + word + ' replaced by: ' + words2[idx]);
-      }
-      return word != words2[idx];
-    }).length
-  }
-}
+};*/
