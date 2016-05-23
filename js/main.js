@@ -8,7 +8,7 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
       Messages = {};
 
   // Your Client ID can be retrieved from your project in the Google
-  sUSER_QUERY = getUrlVars()["q"];
+  sUSER_QUERY = getUrlVars()["q"]+','; // bloody hack to always get an array
   aUSER_QUERY = (sUSER_QUERY) ? decodeURIComponent(sUSER_QUERY).split(',') : ''; //2do: allow sending alphanumeric and commas only
   sUSER_MAXRESULTS = getUrlVars()["maxResults"];
   sUSER_LABEL = decodeURIComponent(getUrlVars()["label"]);
@@ -90,8 +90,6 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
           aParsed = [];
           // flagged-as-matched messages array
           aFlagged = []
-          // regex collection
-
 
           // parse messages for every item in search query
           var aPromises = [];
@@ -206,7 +204,6 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
   }
 
 
-
   function displayParsed(iii,the_promise) {
 
     var request = gapi.client.gmail.users.messages.list({
@@ -214,7 +211,7 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
       labelIds: (sUSER_LABEL) ? sUSER_LABEL : 'INBOX',
       // disabling with maxResults for parsing messages (2do: remove it or redesign limit parameter)
       //maxResults: (sUSER_MAXRESULTS) ? sUSER_MAXRESULTS : 1,
-      'q': (aUSER_QUERY) ? aUSER_QUERY[iii] : ''
+      'q': (aUSER_QUERY) ? aUSER_QUERY[iii] : aUSER_QUERY[0]
     });
 
     request.execute(function (response) {
@@ -302,7 +299,7 @@ var GoogleAPIMailClient = window.GoogleAPIMailClient || (function() {
     var structure = [];
 
     if (aFlagged.indexOf(message.id) > -1) {
-      console.log(' __added to aFlagged ___ ' + message.id);
+      //console.log(' __added to aFlagged ___ ' + message.id);
       return;
     }
 
