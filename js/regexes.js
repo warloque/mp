@@ -5,7 +5,7 @@ window.GoogleAPIMailClient = window.GoogleAPIMailClient || { };
 GoogleAPIMailClient.oRegexes = {
   'a':[
     {
-      'name':['ali','aliexpress','aliexpress.com'],
+      'name':['aliexpress','aliexpress.com'],
       'structure':['id','title','url','name','date','time'],
       'pattern':[
         'order_id=(\\d+).*?<strong>(.*)<\/strong><\/a>.*?<a.*?href="(.*?)">(.*)<\/a>.*?([0-9]+.[0-9]+.[0-9]+)\\s([0-9]+:[0-9]+)',

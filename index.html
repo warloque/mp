@@ -1,111 +1,103 @@
 <!doctype html>
 <html>
-  <head>
+<head>
     <title>Gmail API demo</title>
     <meta charset="UTF-8">
 
     <link rel="stylesheet" href="css/bootstrap.min.css"/>
     <link rel="stylesheet" href="css/bootstrap-theme.min.css"/>
-    <link rel="stylesheet" href="js/plugins/vis/vis.min.css"/>
+    <link rel="stylesheet" href="css/plugins/vis/vis.min.css"/>
+    <link rel="stylesheet" href="css/plugins/tag-editor/jquery.tag-editor.css"/>
     <link rel="stylesheet" href="css/main.css"/>
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700' rel='stylesheet' type='text/css'>
 
-    <style>
-      iframe {
-        width: 100%;
-        border: 0;
-        min-height: 700px;
-        height: 90%;
-        display: flex;
-      }
-      .nowrap {
-        white-space: nowrap;
-      }
-    </style>
+    <link href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAABILAAASCwAAAAAAAAAAAAAAqkRyAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRyAKpEQwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKpELACqRAYAAAAAAAAAAAAAAAAAAAAAAKpEQwCqREMAAAAAAAAAAAAAAAAAAAAAAKpEFgCqRF0AqkSGAKpEjACqRKgAqkSXAKpEEgAAAAAAAAAAAAAAAACqREMAqkRDAAAAAAAAAAAAqkUAAKpEVwCqRLwAqkShAKpEbwCqRGYAqkS6AKpEwwCqRIMAqkQCAAAAAAAAAAAAqkRDAKpEQwAAAAAAAAAAAKpEWwCqRLsAqkRGAKtEAQAAAAAAqkQDAKpEYwCqRCEAq0IAAAAAAAAAAAAAAAAAAKpEQwCqREMAAAAAAKpEHgCqRL4AqkRAAAAAAACqRCsAqkRvAKpEXQCqRD4AqkR4AKpEVwCqRBMAAAAAAAAAAACqREMAqkRDAAAAAACqRGwAqkSVAKdCAACqRCwAqkS/AKpEoACqRJEAqkTAAKpEugCqRLQAqkS4AKpEMQAAAAAAqkRDAKpEQwAAAAAAqkSZAKpEXAAAAAAAqkR9AKpEtQCqRAkAqkUBAKpElQCqRJUAqkQFAKpEhACqRKoAqkQCAKpEQwCqREMAAAAAAKpEowCqRE8AAAAAAKpEkQCqRJ0AAAAAAAAAAACqRHUAqkSVAAAAAACqRDEAqkTDAKpEIACqREMAqkRDAAAAAACqRI4AqkRqAAAAAACqRHQAqkS6AKpEFQCqRAYAqkSiAKpElQAAAAAAqkQpAKpEwwCqRCYAqkRDAKpEQwAAAAAAqkRVAKpErQCqRAYAqkQcAKpEtACqRLYAqkSvAKpEsQCqRJUAAAAAAKpEXwCqRLoAqkQIAKpEQwCqREMAAAAAAKpECgCqRK0AqkRzAKlEAQCqRBMAqkRNAKpEOwCqRBgAqkQtAKpEKQCqRLoAqkRqAAAAAACqREMAqkRDAAAAAAAAAAAAqkQrAKpEuACqRIcAqkQhAKpEAQCpQwAAqkQVAKpEYQCqRLwAqkSQAKpEBwAAAAAAqkRDAKpEQwAAAAAAAAAAAAAAAACqRCAAqkSQAKpEwgCqRLAAqkSsAKpEwQCqRLYAqkRgAKpEBQAAAAAAAAAAAKpEQwCqREMAAAAAAAAAAAAAAAAAAAAAAKhDAACqRBwAqkREAKpESwCqRDIAqkQHAAAAAAAAAAAAAAAAAAAAAACqREMAqkRyAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRyAAAAAH+eAAB4DgAAYAYAAGEOAABEBgAAQAIAAEgAAABJkAAASBAAAEAQAABAAgAAYAIAAHAGAAB4HgAAAAAAAA=="
+          rel="icon" type="image/x-icon">
 
-    <link href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAABILAAASCwAAAAAAAAAAAAAAqkRyAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRyAKpEQwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKpELACqRAYAAAAAAAAAAAAAAAAAAAAAAKpEQwCqREMAAAAAAAAAAAAAAAAAAAAAAKpEFgCqRF0AqkSGAKpEjACqRKgAqkSXAKpEEgAAAAAAAAAAAAAAAACqREMAqkRDAAAAAAAAAAAAqkUAAKpEVwCqRLwAqkShAKpEbwCqRGYAqkS6AKpEwwCqRIMAqkQCAAAAAAAAAAAAqkRDAKpEQwAAAAAAAAAAAKpEWwCqRLsAqkRGAKtEAQAAAAAAqkQDAKpEYwCqRCEAq0IAAAAAAAAAAAAAAAAAAKpEQwCqREMAAAAAAKpEHgCqRL4AqkRAAAAAAACqRCsAqkRvAKpEXQCqRD4AqkR4AKpEVwCqRBMAAAAAAAAAAACqREMAqkRDAAAAAACqRGwAqkSVAKdCAACqRCwAqkS/AKpEoACqRJEAqkTAAKpEugCqRLQAqkS4AKpEMQAAAAAAqkRDAKpEQwAAAAAAqkSZAKpEXAAAAAAAqkR9AKpEtQCqRAkAqkUBAKpElQCqRJUAqkQFAKpEhACqRKoAqkQCAKpEQwCqREMAAAAAAKpEowCqRE8AAAAAAKpEkQCqRJ0AAAAAAAAAAACqRHUAqkSVAAAAAACqRDEAqkTDAKpEIACqREMAqkRDAAAAAACqRI4AqkRqAAAAAACqRHQAqkS6AKpEFQCqRAYAqkSiAKpElQAAAAAAqkQpAKpEwwCqRCYAqkRDAKpEQwAAAAAAqkRVAKpErQCqRAYAqkQcAKpEtACqRLYAqkSvAKpEsQCqRJUAAAAAAKpEXwCqRLoAqkQIAKpEQwCqREMAAAAAAKpECgCqRK0AqkRzAKlEAQCqRBMAqkRNAKpEOwCqRBgAqkQtAKpEKQCqRLoAqkRqAAAAAACqREMAqkRDAAAAAAAAAAAAqkQrAKpEuACqRIcAqkQhAKpEAQCpQwAAqkQVAKpEYQCqRLwAqkSQAKpEBwAAAAAAqkRDAKpEQwAAAAAAAAAAAAAAAACqRCAAqkSQAKpEwgCqRLAAqkSsAKpEwQCqRLYAqkRgAKpEBQAAAAAAAAAAAKpEQwCqREMAAAAAAAAAAAAAAAAAAAAAAKhDAACqRBwAqkREAKpESwCqRDIAqkQHAAAAAAAAAAAAAAAAAAAAAACqREMAqkRyAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRDAKpEQwCqREMAqkRyAAAAAH+eAAB4DgAAYAYAAGEOAABEBgAAQAIAAEgAAABJkAAASBAAAEAQAABAAgAAYAIAAHAGAAB4HgAAAAAAAA==" rel="icon" type="image/x-icon">
+</head>
+<body>
 
-  </head>
-  <body>
+<header class="header clearfix">
 
-    <header class="header clearfix">
-
-      <div class="container">
-
-        <h1>Gmail API demo</h1>
+    <div class="container">
 
         <button id="authorize-button" class="btn btn-primary hidden">Authorize</button>
 
         <form id="filters" name="filters" method="get" class="form-inline hidden">
 
-          <div class="form-group">
-            <label class="control-label" for="label">Label</label>
-            <select class="form-control" id="label" name="label">
-              <option value="">–</option>
-            </select>
-          </div>
+            <div class="container">
+                <h1 class="page-title">Gmail API demo</h1>
+            </div>
 
-          <div class="form-group">
-            <label class="control-label" for="q">Match</label>
-            <input class="form-control" type="text" name="q" id="q" placeholder="filter match" value="" />
-          </div>
-
-          <div class="form-group">
-            <label class="control-label" for="maxResults">Limit</label>
-            <input class="form-control" type="number" name="maxResults" id="maxResults" placeholder="filter limit" value="1" min="1" />
-          </div>
-
-          <div class="btn-group" role="group" aria-label="Basic example">
-            <button type="submit" class="btn btn-success">Read</button>
-            <input type="button" id="js_ui-parse" value="Parse" class="btn btn-info" />
-          </div>
+            <div class="container">
+                <div class="form-group">
+                    <label class="control-label" for="q">What</label>
+                    <input class="form-control" type="text" name="q" id="q" placeholder="filter match" value=""/>
+                </div>
+                <div class="form-group">
+                    <label class="control-label" for="label">Where</label>
+                    <select class="form-control" id="label" name="label">
+                        <option value="">–</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="control-label" for="maxResults">Limit</label>
+                    <input class="form-control" type="number" name="maxResults" id="maxResults" placeholder="filter limit"
+                           value="1" min="1"/>
+                </div>
+                <div class="btn-group" role="group" aria-label="Basic example">
+                    <button type="submit" class="btn btn-success">Read</button>
+                    <input type="button" id="js_ui-parse" value="Parse" class="btn btn-info"/>
+                </div>
+            </div>
 
         </form>
 
-      </div>
+    </div>
 
-    </header>
+</header>
 
-    <section class="container">
+<section class="container">
 
-      <div id="visualization" class="row"></div>
+    <div id="visualization" class="row"></div>
 
-      <div class="alert alert-warning hidden" id="alert"></div>
+    <div class="alert alert-warning hidden" id="alert"></div>
 
-      <table class="table table-hover table-inbox hidden">
+    <table class="table table-hover table-inbox hidden">
         <thead>
-          <tr>
+        <tr>
             <th>From</th>
             <th>Subject</th>
             <th>Date/Time</th>
-          </tr>
+        </tr>
         </thead>
         <tbody></tbody>
-      </table>
+    </table>
 
-    </section>
+</section>
 
-    <div class="modal fade" id="message-modal" tabindex="-1" role="dialog" aria-labelledby="myModalTitle">
-      <div class="modal-dialog modal-lg">
+<div class="modal fade" id="message-modal" tabindex="-1" role="dialog" aria-labelledby="myModalTitle">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <h4 class="modal-title" id="myModalTitle"></h4>
-          </div>
-          <div class="modal-body">
-            <iframe id="message-iframe" srcdoc="<p>Loading...</p>">
-            </iframe>
-          </div>
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="myModalTitle"></h4>
+            </div>
+            <div class="modal-body">
+                <iframe id="message-iframe" srcdoc="<p>Loading...</p>">
+                </iframe>
+            </div>
         </div>
-      </div>
     </div>
+</div>
 
-    <script id="option-template" type="x-tmpl-mustache">
+<script id="option-template" type="x-tmpl-mustache">
       <option value="{{messageLabelId}}" {{messageLabelSelected}}>{{messageLabelName}}</option>
-    </script>
+</script>
 
-    <script id="row-template" type="x-tmpl-mustache">
+<script id="row-template" type="x-tmpl-mustache">
       <tr>
         <td>{{from}}</td>
         <td>
@@ -115,9 +107,9 @@
         </td>
         <td class="nowrap">{{date}}</td>
       </tr>
-    </script>
+</script>
 
-    <script id="row-parsed-template" type="x-tmpl-mustache">
+<script id="row-parsed-template" type="x-tmpl-mustache">
       <tr>
         <td>
           <img class="ui__table__cellimage" height="16" width="16" src="http://www.google.com/s2/favicons?domain={{shop_logo}}" />
@@ -131,29 +123,35 @@
         </td>
         <td class="nowrap">{{order_date}}</td>
       </tr>
-    </script>
+</script>
 
-    <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 
-    <!--<script src="js/utils/h5utils.js"></script>-->
-    <script src="js/utils/utils.js"></script>
+<!--<script src="js/utils/h5utils.js"></script>-->
+<script src="js/utils/utils.js"></script>
 
-    <!--<script src="js/utils/date.format.js"></script>-->
+<!--<script src="js/utils/date.format.js"></script>-->
 
-    <!--<script src="js/plugins/datejs/globalization/ru-RU.js"></script>-->
-    <script src="js/plugins/datejs/date.js"></script>
-    <script src="js/plugins/momentjs/moment-with-locales.js"></script>
+<!--<script src="js/plugins/datejs/globalization/ru-RU.js"></script>-->
+<script src="js/plugins/datejs/date.js"></script>
+<script src="js/plugins/momentjs/moment-with-locales.js"></script>
 
-    <script src="js/plugins/sugarjs/sugar-1.4.1-custom.min.js"></script>
+<script src="js/plugins/sugarjs/sugar-1.4.1-custom.min.js"></script>
 
-    <script src="js/plugins/vis/vis.min.js"></script>
-    <script src="bower_components/mustache/mustache.min.js"></script>
+<script src="js/plugins/vis/vis.min.js"></script>
+<script src="js/plugins/jquery-ui/jquery-ui.js"></script>
+<script src="js/plugins/autocomplete/jquery.autocomplete.js"></script>
+<script src="js/plugins/tag-editor/jquery.caret.min.js"></script>
+<script src="js/plugins/tag-editor/jquery.tag-editor.min.js"></script>
 
-    <script src="config.js"></script>
-    <script src="js/main.js"></script>
-    <script src="js/regexes.js"></script>
-    <script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+<script src="bower_components/mustache/mustache.min.js"></script>
 
-  </body>
+<script src="config.js"></script>
+<script src="js/main.js"></script>
+<script src="js/regexes.js"></script>
+<script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+
+
+</body>
 </html>
